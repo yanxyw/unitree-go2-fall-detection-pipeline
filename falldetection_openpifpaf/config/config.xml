@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <Source>
+        <RTSPAPI>
+            <ID></ID>
+            <RTSPURL></RTSPURL>
+            <Scale>0.7</Scale>
+        </RTSPAPI>
+    </Source>
+    <Output>
+        <FileOutput>
+            <FileName>{yyyymmdd}_{HHMMSS}_{streamID}_{algoName}_{fallcount}.jpg</FileName>
+        </FileOutput>
+    </Output>
+</config>

@@ -1,0 +1,14 @@
+# Ignore specific CUDA installer file
+cuda-repo-ubuntu*.deb*
+
+# Python bytecode and cache files
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Example videos
+videos/
+
+# Ignore OS specific files
+.DS_Store
+Thumbs.db
