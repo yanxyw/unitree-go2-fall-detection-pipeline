@@ -62,6 +62,6 @@ The server will start at `http://localhost:8000`.
 
 ---
 
-### 4. `mobile` — Flutter Notification App
+### 4. `mobile` — Flutter App
 
 A basic Flutter app that registers for FCM and listens for push notifications from the backend.

@@ -3,19 +3,27 @@ import httpx
 from fastapi import FastAPI, HTTPException
 from google.auth.transport.requests import Request
 from google.oauth2 import service_account
-from pydantic import BaseModel
+from models import NotificationRequest, FCMTokenRequest
+from typing import List
 
 app = FastAPI()
 
 # Load Firebase Service Account JSON file
 SERVICE_ACCOUNT_FILE = "unitree-go2-fcm.json"
 
+# In-memory token store for simplicity
+stored_token: str | None = None
 
-# Define request model
-class NotificationRequest(BaseModel):
-    title: str
-    body: str
-    token: str
+@app.post("/register-token/")
+async def register_token(payload: FCMTokenRequest):
+    global stored_token
+    stored_token = payload.token
+    print("Token registered:", stored_token)
+    return {"message": "Token registered successfully"}
+
+@app.get("/tokens/")
+def get_tokens():
+    return {"tokens": stored_tokens}
 
 
 def get_firebase_access_token():
@@ -30,8 +38,10 @@ def get_firebase_access_token():
 
 @app.post("/notify/")
 async def send_notification(request: NotificationRequest):
-    access_token = get_firebase_access_token()
+    if not stored_token:
+        raise HTTPException(status_code=400, detail="No FCM token registered")
 
+    access_token = get_firebase_access_token()
     FCM_ENDPOINT = f"https://fcm.googleapis.com/v1/projects/unitree-go2/messages:send"
 
     headers = {
@@ -41,8 +51,13 @@ async def send_notification(request: NotificationRequest):
 
     payload = {
         "message": {
-            "token": request.token,
+            "token": stored_token,
             "notification": {
+                "title": request.title,
+                "body": request.body,
+            },
+        "data": {
+                "click_action": "FLUTTER_NOTIFICATION_CLICK",
                 "title": request.title,
                 "body": request.body,
             },

@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:http/http.dart' as http;
 
 final FlutterLocalNotificationsPlugin
     flutterLocalNotificationsPlugin =
@@ -69,17 +72,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// ✅ Get FCM Token
   Future<void> _fetchFcmToken() async {
-    try {
-      String? token =
-          await FirebaseMessaging.instance.getToken();
-      print("✅ FCM Token: $token");
+  try {
+    String? token = await FirebaseMessaging.instance.getToken();
+    print("✅ FCM Token: $token");
+
+    if (token != null) {
       setState(() {
         _fcmToken = token;
       });
-    } catch (e) {
-      print("❌ Error fetching FCM token: $e");
+
+      final response = await http.post(
+        Uri.parse('http://10.0.2.2:8000/register-token/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'token': token}),
+      );
+
+      print("📤 Sent token to backend: ${response.body}");
     }
+  } catch (e) {
+    print("❌ Error fetching FCM token: $e");
   }
+}
 
   /// ✅ Listen for foreground and background notifications
   void _setupFCMListeners() {
@@ -144,11 +157,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("FCM Token")),
+      appBar: AppBar(title: Text("Demo app")),
       body: Center(
-        child: _fcmToken == null
-            ? CircularProgressIndicator()
-            : SelectableText("FCM Token: $_fcmToken"),
+        child: Text("This is a demo app that receives notifications"),
       ),
     );
   }
