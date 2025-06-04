@@ -74,7 +74,7 @@ $ (use --help to see the full list of command line arguments)
 1. First activate virtual environment  
    
     ```console
-    conda activate
+    conda activate falldetection_openpifpaf
     ```
 
 2. Running the model
@@ -115,7 +115,7 @@ $ (use --help to see the full list of command line arguments)
     - Copy all files from your cloned repository
 
         ```console
-        cp -r ~/Documents/falldetection_openpifpaf/* .
+        cp -r ~/Documents/unitree-fall-detection-pipeline/falldetection_openpifpaf/* .
         ```
 
 ## Citations

@@ -26,6 +26,8 @@ import os
 import sys
 import time
 import cProfile, pstats
+import requests
+import httpx
 
 import PIL
 import torch
@@ -229,10 +231,27 @@ def inference(args, stream):
         output_fps = 1.0 / loop_time
         
         ax.text(0, 0.95, "FPS: {}".format(output_fps), fontsize=16, color='black', transform=ax.transAxes, bbox={'facecolor': 'white', 'alpha': 0.5, 'linewidth': 0, 'pad': 0.1})
-        
+ 
         if fallcount is not None:
+            # If a new fall is detected
+            if fallcount > old_fallcount:
+                try:
+                    print("📤 Sending FCM notification...")
+                    response = httpx.post(
+                        "http://127.0.0.1:8000/notify/",
+                        json={
+                            "title": "⚠️ Fall Detected",
+                            "body": f"Fall count increased to {fallcount}",
+                        },
+                        timeout=5.0
+                    )
+                    print("✅ Notification sent:", response.json())
+                except Exception as e:
+                    print("❌ Error sending notification:", e)
+            
             ax.text(0, 0.9, "Fall Count: {}".format(fallcount), fontsize=16, color='black', transform=ax.transAxes, bbox={'facecolor': 'white', 'alpha': 0.5, 'linewidth': 0, 'pad': 0.1})
             old_fallcount = fallcount
+
         else:
             ax.text(0, 0.9, "Fall Count: {}".format(old_fallcount), fontsize=16, color='black', transform=ax.transAxes, bbox={'facecolor': 'white', 'alpha': 0.5, 'linewidth': 0, 'pad': 0.1})
         
