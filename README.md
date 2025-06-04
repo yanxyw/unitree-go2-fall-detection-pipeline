@@ -16,16 +16,18 @@ A lightweight Flask server that connects to the Unitree Go2 robot, retrieves the
 http://localhost:8080/video
 ```
 
+This module is adapted from [legion1581/go2_webrtc_connect](https://github.com/legion1581/go2_webrtc_connect).
+
 #### Setup and Run
 
 1. Follow the instructions in `go2_webrtc_connect/README.md` to install dependencies.
 2. Then run:
 
-```bash
-cd go2_webrtc_connect/examples/video/camera_stream
-python3 display_video_channel.py
-```
-Live stream video can be accessed at `http://localhost:8080/video`.
+    ```bash
+    cd go2_webrtc_connect/examples/video/camera_stream
+    python3 display_video_channel.py
+    ```
+    Live stream video can be accessed at `http://localhost:8080/video`.
 
 ---
 
@@ -34,6 +36,8 @@ Live stream video can be accessed at `http://localhost:8080/video`.
 A fall detection system based on OpenPifPaf.
 
 In this pipeline, it analyzes the video stream from the WebRTC driver and, when a fall is detected, sends a notification request to the backend API.
+
+This module is adapted from [cwlroda/falldetection_openpifpaf](https://github.com/cwlroda/falldetection_openpifpaf).
 
 #### Run the Model
 
@@ -54,11 +58,11 @@ A simple FastAPI backend that exposes a `/notify` endpoint. When this endpoint i
 1. Follow the instructions in `api/README.md` to install dependencies.
 
 2. Then run:
-```bash
-uvicorn main:app --reload
-```
+    ```bash
+    uvicorn main:app --reload
+    ```
 
-The server will start at `http://localhost:8000`.
+    The server will start at `http://localhost:8000`.
 
 ---
 
