@@ -69,3 +69,24 @@ A simple FastAPI backend that exposes a `/notify` endpoint. When this endpoint i
 ### 4. `mobile` — Flutter App
 
 A basic Flutter app that registers for FCM and listens for push notifications from the backend.
+
+
+## 2. Architecture and Implementation Diagrams
+
+### 1. System Architecture
+
+The overall system architecture includes three major components:
+
+- Unitree Go2 robot.
+- Local/Cloud Servers — steam real-time video, handle video processing and backend logic.
+- Mobile App — receives notifications when a fall is detected.
+
+The backend and processing components can be deployed either locally or using cloud platforms like AWS, Azure, etc.
+
+![architecrure](/assets/architecture.png)
+
+### 2. Implementation Details
+
+The diagram below illustrates the implementation details and data flow between components.
+
+![implementation](/assets/implementation.png)
