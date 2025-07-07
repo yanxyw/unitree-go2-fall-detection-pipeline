@@ -5,6 +5,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
+import 'package:mobile/config.dart';
 
 final FlutterLocalNotificationsPlugin
     flutterLocalNotificationsPlugin =
@@ -29,9 +30,14 @@ void main() async {
   const AndroidInitializationSettings
       androidInitializationSettings =
       AndroidInitializationSettings('@mipmap/ic_launcher');
-  const DarwinInitializationSettings
-      iosInitializationSettings =
-      DarwinInitializationSettings();
+
+  const DarwinInitializationSettings iosInitializationSettings =
+  DarwinInitializationSettings(
+    requestAlertPermission: true,
+    requestBadgePermission: true,
+    requestSoundPermission: true,
+  );
+
   const InitializationSettings initializationSettings =
       InitializationSettings(
     android: androidInitializationSettings,
@@ -40,6 +46,12 @@ void main() async {
 
   await flutterLocalNotificationsPlugin
       .initialize(initializationSettings);
+
+  await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
 
   runApp(MyApp());
 }
@@ -61,7 +73,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  String? _fcmToken;
 
   @override
   void initState() {
@@ -77,12 +88,8 @@ class _HomeScreenState extends State<HomeScreen> {
     print("✅ FCM Token: $token");
 
     if (token != null) {
-      setState(() {
-        _fcmToken = token;
-      });
-
       final response = await http.post(
-        Uri.parse('http://10.0.2.2:8000/register-token/'),
+        Uri.parse('$apiBaseUrl/register-token/'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'token': token}),
       );
