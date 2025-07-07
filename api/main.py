@@ -1,11 +1,13 @@
-from typing import Union
 from fastapi import FastAPI
-from send_notification import app as notification_app
+from db import init_db
+from send_notification import router as notification_router
 
 app = FastAPI()
+app.include_router(notification_router)
 
-app.include_router(notification_app.router)
-
+@app.on_event("startup")
+async def on_startup():
+    await init_db()
 
 @app.get("/")
 def read_root():

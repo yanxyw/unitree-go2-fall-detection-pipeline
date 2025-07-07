@@ -4,3 +4,5 @@ httpx
 pydantic
 google-auth
 google-auth-oauthlib
+sqlalchemy>=2.0
+aiosqlite
