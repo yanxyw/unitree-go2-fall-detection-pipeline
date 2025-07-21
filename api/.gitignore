@@ -16,3 +16,5 @@ venv/
 *.tmp.*
 __pycache__/
 unitree-go2-fcm.json
+
+/static

@@ -6,6 +6,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
 import 'package:mobile/config.dart';
+import 'fullscreen_image_page.dart';
 
 final FlutterLocalNotificationsPlugin
     flutterLocalNotificationsPlugin =
@@ -103,37 +104,66 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// ✅ Listen for foreground and background notifications
   void _setupFCMListeners() {
-    /// Foreground Notifications
-    FirebaseMessaging.onMessage
-        .listen((RemoteMessage message) {
-      print(
-          "📩 Foreground Notification: ${message.notification?.title} - ${message.notification?.body}");
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print("📩 Foreground Notification: ${message.notification?.title} - ${message.notification?.body}");
+      print("📦 Data: ${message.data}");
 
-      // ✅ Show a native notification banner
-      _showNotification(message.notification?.title,
-          message.notification?.body);
+      final title = message.notification?.title ?? "No Title";
+      final body = message.notification?.body ?? "No Body";
+      final timestamp = message.data['timestamp'];
+      final imageUrl = message.data['image'];
 
+      // Native notification
+      _showNotification(title, body);
+
+      // Show custom fall dialog
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text(
-              message.notification?.title ?? "No Title"),
-          content:
-              Text(message.notification?.body ?? "No Body"),
+          title: Text(title),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (timestamp != null)
+                Text("🕒 $timestamp", style: TextStyle(fontSize: 14)),
+              if (imageUrl != null && imageUrl.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12.0),
+                  child: Image.network(
+                    imageUrl,
+                    width: 250,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) =>
+                        Text("⚠️ Failed to load image"),
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.only(top: 12.0),
+                child: Text(body, textAlign: TextAlign.center),
+              ),
+            ],
+          ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text("OK"))
+              onPressed: () => Navigator.pop(context),
+              child: Text("OK"),
+            ),
+            if (imageUrl != null && imageUrl.isNotEmpty)
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FullscreenImagePage(imageUrl: imageUrl),
+                    ),
+                  );
+                },
+                child: Text("View Image"),
+              ),
           ],
         ),
       );
-    });
-
-    /// Background Notifications (User taps notification)
-    FirebaseMessaging.onMessageOpenedApp
-        .listen((RemoteMessage message) {
-      print(
-          "🔄 Notification Clicked: ${message.notification?.title} - ${message.notification?.body}");
     });
   }
 

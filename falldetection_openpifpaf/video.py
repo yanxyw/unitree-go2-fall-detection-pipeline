@@ -334,6 +334,22 @@ def predict():
             b64_image = base64.b64encode(jpeg).decode("utf-8")
             response["image"] = b64_image
 
+            # Call notification API
+            try:
+                notify_response = httpx.post(
+                    "https://proper-cricket-wholly.ngrok-free.app/notify/",
+                    json={
+                        "title": "Fall Detected",
+                        "body": f"Fall count increased to {fallcount}",
+                        "timestamp": timestamp,
+                        "image": b64_image
+                    },
+                    timeout=5.0
+                )
+                print("✅ Notification sent:", notify_response.json())
+            except Exception as notify_err:
+                print("❌ Notification error:", notify_err)
+
             old_fallcount = fallcount
 
         return jsonify(response)

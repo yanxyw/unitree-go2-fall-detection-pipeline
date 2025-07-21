@@ -102,7 +102,7 @@ $ (use --help to see the full list of command line arguments)
     - Expose `/predict` endpoint to predict by frame:
 
         ```console
-        python3 -m openpifpaf.video --source=server --show 
+        python3 -m openpifpaf.video --source=server
         ```
 
 3. After making changes to the model
