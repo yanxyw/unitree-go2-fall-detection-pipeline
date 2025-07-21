@@ -95,7 +95,14 @@ $ (use --help to see the full list of command line arguments)
     - Run model from streaming:
 
         ```console
-        python3 -m openpifpaf.video --source=http://localhost:8080/video --show --scale=0.2
+        python3 -m openpifpaf.video --source=url --show 
+        --scale=0.2
+        ```
+    
+    - Expose `/predict` endpoint to predict by frame:
+
+        ```console
+        python3 -m openpifpaf.video --source=server --show 
         ```
 
 3. After making changes to the model

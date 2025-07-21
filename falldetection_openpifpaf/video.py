@@ -37,6 +37,12 @@ import cv2  # pylint: disable=import-error
 from . import decoder, network, show, transforms, visualizer, __version__
 from . import config, core, logger
 
+from flask import Flask, request, jsonify
+import numpy as np
+
+app = Flask(__name__)
+
+
 os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;udp"
 LOG = logging.getLogger(__name__)
 
@@ -284,13 +290,82 @@ def inference(args, stream):
         
     return
 
+# Serve /predict endpoint
+import base64
+from datetime import datetime, timezone
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+# Global shared variables
+processor = None
+model = None
+args = None
+annotation_painter = show.AnnotationPainter()
+old_fallcount = 0 
+
+@app.route("/predict", methods=["POST"])
+def predict():
+    global old_fallcount
+
+    try:
+        file = request.files["image"]
+        img_bytes = file.read()
+
+        if not img_bytes:
+            return jsonify({"error": "empty image file"}), 400
+
+        npimg = np.frombuffer(img_bytes, np.uint8)
+        frame = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+
+        if frame is None:
+            return jsonify({"error": "invalid image"}), 400
+
+        fallcount = process_frame_direct(frame, processor, model, args)
+        response = {"fall_count": fallcount}
+
+        if fallcount is not None and fallcount > old_fallcount:
+            # Add timestamp in ISO format
+            timestamp = datetime.now(timezone.utc).isoformat()
+            response["timestamp"] = timestamp
+
+            # Include base64-encoded image
+            _, jpeg = cv2.imencode('.jpg', frame)
+            b64_image = base64.b64encode(jpeg).decode("utf-8")
+            response["image"] = b64_image
+
+            old_fallcount = fallcount
+
+        return jsonify(response)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
+
+def process_frame_direct(frame, processor, model, args):
+    image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    image_pil = PIL.Image.fromarray(image)
+    processed_image, _, __ = transforms.EVAL_TRANSFORM(image_pil, [], None)
+    preds = processor.batch(model, torch.unsqueeze(processed_image, 0), device=args.device)[0]
+
+    fig, ax = plt.subplots()
+    fallcount = annotation_painter.annotations(ax, preds, "webrtc", 30)
+    plt.close(fig)
+
+    return fallcount
 
 def main():
+    global processor, model, args
     args = cli()
+    processor, model = processor_factory(args)
     
     if args.device == torch.device('cuda'):
         mp.set_start_method('forkserver')
-    
+
+    if args.source == "server":
+        app.run(host="0.0.0.0", port=5555)
+
     if args.source is None:
         settings = config.ConfigParser().getConfig()
         streamer = core.MultiStreamLoader(settings['RTSPAPI'])
