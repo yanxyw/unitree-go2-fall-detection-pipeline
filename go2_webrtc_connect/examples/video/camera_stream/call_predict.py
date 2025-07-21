@@ -4,25 +4,47 @@ import logging
 import threading
 import time
 import requests
-import numpy as np
 from go2_webrtc_driver.webrtc_driver import Go2WebRTCConnection, WebRTCConnectionMethod
 from aiortc import MediaStreamTrack
+from collections import deque
+
+fps_deque = deque(maxlen=30)
+last_fps_print = time.time()
 
 PREDICT_URL = "http://localhost:5555/predict"
 
 def send_to_fall_detector(frame):
+    global last_fps_print
+
     try:
+        start = time.time()
         _, img_encoded = cv2.imencode('.jpg', frame)
         response = requests.post(
             PREDICT_URL,
             files={"image": ("frame.jpg", img_encoded.tobytes(), "image/jpeg")},
-            timeout=1.5
+            timeout=2.0
         )
+        duration = time.time() - start
         response.raise_for_status()
-        fall_count = response.json().get("fall_count", None)
-        print(f"Fall Count: {fall_count}")
+
+        data = response.json()
+        fall_count = data.get("fall_count", None)
+        print(f"✅ Fall Count: {fall_count} | ⏱️ Predict time: {duration:.3f}s")
+
+        # Record time for FPS
+        fps_deque.append(time.time())
+
+        # Print FPS every second
+        if time.time() - last_fps_print >= 1.0:
+            if len(fps_deque) >= 2:
+                time_diffs = [t2 - t1 for t1, t2 in zip(fps_deque, list(fps_deque)[1:])]
+                avg_frame_time = sum(time_diffs) / len(time_diffs)
+                fps = 1.0 / avg_frame_time if avg_frame_time > 0 else 0.0
+                print(f"📷 Approx FPS: {fps:.2f}")
+            last_fps_print = time.time()
+
     except Exception as e:
-        print(f"Prediction error: {e}")
+        print(f"❌ Prediction error: {e}")
 
 def main():
     logging.basicConfig(level=logging.FATAL)
@@ -32,7 +54,7 @@ def main():
         while True:
             frame = await track.recv()
             img = frame.to_ndarray(format="bgr24")
-            img = cv2.resize(img, (640, 480))  # Resize for performance
+            img = cv2.resize(img, (640, 480))
             threading.Thread(target=send_to_fall_detector, args=(img,)).start()
 
     def run_asyncio_loop(loop):
