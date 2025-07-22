@@ -79,6 +79,7 @@ async def send_notification(request: NotificationRequest, session: AsyncSession 
             print("⚠️ Failed to save image:", e)
 
     async with httpx.AsyncClient() as client:
+        tokens_to_remove = []
         for token in tokens:
             payload = {
                 "message": {
@@ -112,7 +113,26 @@ async def send_notification(request: NotificationRequest, session: AsyncSession 
             }
 
             response = await client.post(FCM_ENDPOINT, headers=headers, json=payload)
+
             if response.status_code != 200:
                 print(f"❌ Failed to send to {token.token}: {response.text}")
+                try:
+                    error_data = response.json()
+                    if (
+                        "error" in error_data
+                        and error_data["error"].get("status") == "NOT_FOUND"
+                        and "UNREGISTERED" in str(error_data["error"])
+                    ):
+                        print(f"🧹 Removing unregistered token: {token.token}")
+                        tokens_to_remove.append(token)
+                except Exception as parse_error:
+                    print("⚠️ Could not parse error response:", parse_error)
+
+        # Bulk remove invalid tokens after sending
+        for token in tokens_to_remove:
+            await session.delete(token)
+        if tokens_to_remove:
+            await session.commit()
 
     return {"message": "Notifications sent"}
+

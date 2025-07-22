@@ -239,22 +239,6 @@ def inference(args, stream):
         ax.text(0, 0.95, "FPS: {}".format(output_fps), fontsize=16, color='black', transform=ax.transAxes, bbox={'facecolor': 'white', 'alpha': 0.5, 'linewidth': 0, 'pad': 0.1})
  
         if fallcount is not None:
-            # If a new fall is detected
-            if fallcount > old_fallcount:
-                try:
-                    print("📤 Sending FCM notification...")
-                    response = httpx.post(
-                        "http://127.0.0.1:8000/notify/",
-                        json={
-                            "title": "⚠️ Fall Detected",
-                            "body": f"Fall count increased to {fallcount}",
-                        },
-                        timeout=5.0
-                    )
-                    print("✅ Notification sent:", response.json())
-                except Exception as e:
-                    print("❌ Error sending notification:", e)
-            
             ax.text(0, 0.9, "Fall Count: {}".format(fallcount), fontsize=16, color='black', transform=ax.transAxes, bbox={'facecolor': 'white', 'alpha': 0.5, 'linewidth': 0, 'pad': 0.1})
             old_fallcount = fallcount
 
@@ -296,6 +280,10 @@ from datetime import datetime, timezone
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+import threading
+
+# Global shared client
+client = httpx.Client(timeout=5.0)
 
 # Global shared variables
 processor = None
@@ -303,6 +291,20 @@ model = None
 args = None
 annotation_painter = show.AnnotationPainter()
 old_fallcount = 0 
+
+def warmup_notification():
+    try:
+        # Send a dummy request to establish connection early
+        client.post(
+            "https://proper-cricket-wholly.ngrok-free.app/notify/",
+            json={"title": "Test", "body": "Testing notification"},
+        )
+        print("🔥 Notification warmup complete")
+    except Exception as e:
+        print("⚠️ Notification warmup failed:", e)
+
+# Start warmup once when the app starts
+threading.Thread(target=warmup_notification, daemon=True).start()
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -334,22 +336,12 @@ def predict():
             b64_image = base64.b64encode(jpeg).decode("utf-8")
             response["image"] = b64_image
 
-            # Call notification API
-            try:
-                notify_response = httpx.post(
-                    "https://proper-cricket-wholly.ngrok-free.app/notify/",
-                    json={
-                        "title": "Fall Detected",
-                        "body": f"Fall count increased to {fallcount}",
-                        "timestamp": timestamp,
-                        "image": b64_image
-                    },
-                    timeout=5.0
-                )
-                print("✅ Notification sent:", notify_response.json())
-            except Exception as notify_err:
-                print("❌ Notification error:", notify_err)
-
+            # Call notification API in background thread
+            threading.Thread(
+                target=send_notification,
+                args=(fallcount, timestamp, b64_image),
+                daemon=True
+            ).start()
             old_fallcount = fallcount
 
         return jsonify(response)
@@ -358,6 +350,21 @@ def predict():
         import traceback
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+def send_notification(fallcount, timestamp, b64_image):
+    try:
+        response = client.post(
+            "https://proper-cricket-wholly.ngrok-free.app/notify/",
+            json={
+                "title": "Fall Detected",
+                "body": f"Fall count increased to {fallcount}",
+                "timestamp": timestamp,
+                "image": b64_image
+            },
+        )
+        print("✅ Notification sent:", response.json())
+    except Exception as e:
+        print("❌ Notification error:", e)
 
 def process_frame_direct(frame, processor, model, args):
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
