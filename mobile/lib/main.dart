@@ -131,7 +131,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               if (timestamp != null)
                 Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
+                  padding: const EdgeInsets.only(top: 2.0),
                   child: Text(
                     "🕒 ${_formatTimestamp(timestamp)}",
                     style: TextStyle(fontSize: 14, color: Colors.grey[700]),
