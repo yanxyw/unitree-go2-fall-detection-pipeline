@@ -25,5 +25,5 @@ mobile/android/app/google-services.json
 To run on an Android emulator or connected device:
 
 ```bash
-flutter run
+flutter run --dart-define=API_BASE_URL=https://proper-cricket-wholly.ngrok-free.app
 ```

@@ -10,11 +10,7 @@ The pipeline consists of four components:
 
 ### 1. `go2_webrtc_connect` — WebRTC Video Driver
 
-A lightweight Flask server that connects to the Unitree Go2 robot, retrieves the camera feed, and exposes it as a video stream at:
-
-```
-http://localhost:8080/video
-```
+A Python-based WebRTC driver that connects to the Unitree Go2 robot, retrieves its live camera feed as decoded frames via OpenCV, and sends each frame to the `/predict` endpoint for real-time fall detection.
 
 This module is adapted from [legion1581/go2_webrtc_connect](https://github.com/legion1581/go2_webrtc_connect).
 
@@ -25,10 +21,8 @@ This module is adapted from [legion1581/go2_webrtc_connect](https://github.com/l
 
     ```bash
     cd go2_webrtc_connect/examples/video/camera_stream
-    python3 display_video_channel.py
+    python call_predict.py
     ```
-    Live stream video can be accessed at `http://localhost:8080/video`.
-
 ---
 
 ### 2. `falldetection_openpifpaf` — Fall Detection Model

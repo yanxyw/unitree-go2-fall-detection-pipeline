@@ -19,16 +19,17 @@ Trouble shooting:
 
 
 import argparse
-import json
 import logging
 import io
 import os
-import sys
-import time
 import cProfile, pstats
-import requests
 import httpx
-
+import base64
+from datetime import datetime, timezone
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+import threading
 import PIL
 import torch
 import torch.multiprocessing as mp
@@ -36,6 +37,7 @@ import torch.multiprocessing as mp
 import cv2  # pylint: disable=import-error
 from . import decoder, network, show, transforms, visualizer, __version__
 from . import config, core, logger
+from config import NOTIFICATION_URL
 
 from flask import Flask, request, jsonify
 import numpy as np
@@ -274,14 +276,6 @@ def inference(args, stream):
         
     return
 
-# Serve /predict endpoint
-import base64
-from datetime import datetime, timezone
-import matplotlib
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
-import threading
-
 # Global shared client
 client = httpx.Client(timeout=5.0)
 
@@ -294,9 +288,8 @@ old_fallcount = 0
 
 def warmup_notification():
     try:
-        # Send a dummy request to establish connection early
         client.post(
-            "https://proper-cricket-wholly.ngrok-free.app/notify/",
+            NOTIFICATION_URL,
             json={"title": "Test", "body": "Testing notification"},
         )
         print("🔥 Notification warmup complete")
@@ -354,12 +347,12 @@ def predict():
 def send_notification(fallcount, timestamp, b64_image):
     try:
         response = client.post(
-            "https://proper-cricket-wholly.ngrok-free.app/notify/",
+            NOTIFICATION_URL,
             json={
                 "title": "Fall Detected",
                 "body": f"Fall count increased to {fallcount}",
                 "timestamp": timestamp,
-                "image": b64_image
+                "image": b64_image,
             },
         )
         print("✅ Notification sent:", response.json())

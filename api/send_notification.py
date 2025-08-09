@@ -9,6 +9,12 @@ from db import get_session
 import os
 import base64
 from datetime import datetime, timezone
+import sys
+from pathlib import Path
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from config import API_BASE_URL
 
 router = APIRouter()
 
@@ -74,7 +80,7 @@ async def send_notification(request: NotificationRequest, session: AsyncSession 
                 f.write(base64.b64decode(request.image))
 
             # Construct public URL
-            image_url = f"https://proper-cricket-wholly.ngrok-free.app/static/falls/{filename}"
+            image_url = f"{API_BASE_URL.rstrip('/')}/static/falls/{filename}"
         except Exception as e:
             print("⚠️ Failed to save image:", e)
 

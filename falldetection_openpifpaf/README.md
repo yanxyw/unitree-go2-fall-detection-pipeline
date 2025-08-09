@@ -102,6 +102,7 @@ $ (use --help to see the full list of command line arguments)
     - Expose `/predict` endpoint to predict by frame:
 
         ```console
+        export API_BASE_URL="https://proper-cricket-wholly.ngrok-free.app"
         python3 -m openpifpaf.video --source=server
         ```
 

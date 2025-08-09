@@ -1,8 +1,14 @@
 import cv2
 import requests
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+from config import PREDICT_URL
 
 video_path = "input/50waystofall.mp4"
-predict_url = "http://127.0.0.1:5555/predict"
 
 cap = cv2.VideoCapture(video_path)
 
@@ -23,7 +29,7 @@ while True:
 
     _, img_encoded = cv2.imencode('.jpg', frame)
     response = requests.post(
-        predict_url,
+        PREDICT_URL,
         files={"image": ("frame.jpg", img_encoded.tobytes(), "image/jpeg")}
     )
 
